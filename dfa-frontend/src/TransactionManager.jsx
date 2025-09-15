@@ -5,14 +5,13 @@ function getToday() {
   return d.toISOString().slice(0, 10);
 }
 
-const TransactionManager = () => {
+const TransactionManager = ({ transactions, setTransactions }) => {
   const [form, setForm] = useState({
     date: getToday(),
     description: '',
     amount: '',
     type: 'Income',
   });
-  const [transactions, setTransactions] = useState([]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -83,7 +82,9 @@ const TransactionManager = () => {
         </div>
       </form>
 
-      {transactions.length > 0 && (
+      {transactions.length === 0 ? (
+        <div className="alert alert-info">No transactions to display. Please add or upload transactions.</div>
+      ) : (
         <div className="table-responsive">
           <table className="table table-bordered table-striped">
             <thead className="table-light">

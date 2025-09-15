@@ -3,6 +3,7 @@ import TransactionManager from './TransactionManager.jsx';
 import AnalyticsDashboard from './AnalyticsDashboard.jsx';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {Link, Route, BrowserRouter as Router, Routes} from 'react-router-dom';
+import React, { useState } from 'react';
 
 
 function Home() {
@@ -22,12 +23,13 @@ function Home() {
 }
 
 function App() {
+  const [transactions, setTransactions] = useState([]);
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/transaction-manager" element={<TransactionManager />} />
-        <Route path="/analytics-dashboard" element={<AnalyticsDashboard />} />
+        <Route path="/transaction-manager" element={<TransactionManager transactions={transactions} setTransactions={setTransactions} />} />
+        <Route path="/analytics-dashboard" element={<AnalyticsDashboard transactions={transactions} />} />
       </Routes>
     </Router>
   );
