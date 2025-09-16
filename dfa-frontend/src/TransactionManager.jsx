@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Modal, Button } from 'react-bootstrap';
-// Simple CSV parser (comma only, no quoted fields)
+
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
@@ -32,7 +32,20 @@ const TransactionManager = ({ transactions, setTransactions }) => {
   const [uploading, setUploading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [uploadInfo, setUploadInfo] = useState(null);
-  // Handle CSV upload
+
+  const [search, setSearch] = useState('');
+
+  const filteredTransactions = transactions.filter(txn => {
+    if (!search) return true;
+    const s = search.toLowerCase();
+    return (
+      txn.date.toLowerCase().includes(s) ||
+      txn.description.toLowerCase().includes(s) ||
+      txn.amount.toString().toLowerCase().includes(s) ||
+      txn.type.toLowerCase().includes(s) ||
+      (txn.category || '').toLowerCase().includes(s)
+    );
+  });
   const handleCSVUpload = (e) => {
     e.preventDefault();
     const file = fileInputRef.current.files[0];
@@ -42,7 +55,7 @@ const TransactionManager = ({ transactions, setTransactions }) => {
     reader.onload = (event) => {
       const text = event.target.result;
       const parsed = parseCSV(text);
-      // Accept columns: date, description, amount, type, category (case-insensitive)
+
       const validRows = parsed.filter(row => row.date && row.description && row.amount && row.type && row.category);
       const formatted = validRows.map(row => ({
         date: row.date,
@@ -116,6 +129,17 @@ const TransactionManager = ({ transactions, setTransactions }) => {
           </Modal.Footer>
         </form>
       </Modal>
+      <div className="row mb-3">
+        <div className="col-md-6">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search transactions..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
       <form className="row g-3 mb-4" onSubmit={handleSubmit}>
         <div className="col-md-2">
           <input
@@ -180,8 +204,8 @@ const TransactionManager = ({ transactions, setTransactions }) => {
         </div>
       </form>
 
-      {transactions.length === 0 ? (
-        <div className="alert alert-info">No transactions to display. Please add or upload transactions.</div>
+      {filteredTransactions.length === 0 ? (
+        <div className="alert alert-info">No transactions match your search.</div>
       ) : (
         <div className="table-responsive">
           <table className="table table-bordered table-striped">
@@ -195,7 +219,7 @@ const TransactionManager = ({ transactions, setTransactions }) => {
               </tr>
             </thead>
             <tbody>
-              {transactions.map((txn, idx) => (
+              {filteredTransactions.map((txn, idx) => (
                 <tr key={idx}>
                   <td>{txn.date}</td>
                   <td>{txn.description}</td>
