@@ -1,9 +1,19 @@
-import React from 'react';
+
+import React, { useEffect, useState } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import { fetchTransactions } from './api';
 
+function AnalyticsDashboard({ auth }) {
+  const [transactions, setTransactions] = useState([]);
 
-function AnalyticsDashboard({ transactions }) {
+  useEffect(() => {
+    if (auth && auth.user && auth.token) {
+      fetchTransactions(auth.user.id, auth.token)
+        .then(data => setTransactions(data))
+        .catch(err => console.error('Failed to fetch transactions:', err));
+    }
+  }, [auth]);
 
   const income = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + parseFloat(t.amount), 0);
   const expense = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + parseFloat(t.amount), 0);
@@ -15,11 +25,10 @@ function AnalyticsDashboard({ transactions }) {
       colorByPoint: true,
       data: [
         { name: 'Income', y: income },
-        { name: 'Expense', y: expense },
+        { name: 'Expense', y: Math.abs(expense) },
       ]
     }]
   };
-
 
   const dates = [...new Set(transactions.map(t => t.date))].sort();
   const incomeByDate = dates.map(date => transactions.filter(t => t.date === date && t.type === 'Income').reduce((sum, t) => sum + parseFloat(t.amount), 0));
