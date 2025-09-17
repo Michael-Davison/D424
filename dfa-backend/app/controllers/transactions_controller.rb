@@ -3,9 +3,9 @@ class TransactionsController < ApplicationController
 
   # GET /transactions
   def index
-    transactions = Transaction.where(user_id: current_user.id)
-    render json: transactions
-  end
+  transactions = Transaction.where(user_id: params[:user_id])
+  render json: transactions.as_json(methods: [], except: [], only: [:id, :date, :description, :amount, :type, :category, :user_id])
+end
 
   # GET /transactions/:id
   def show
