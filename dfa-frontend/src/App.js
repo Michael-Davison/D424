@@ -3,7 +3,8 @@ import TransactionManager from './TransactionManager.jsx';
 import AnalyticsDashboard from './AnalyticsDashboard.jsx';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {Link, Route, BrowserRouter as Router, Routes} from 'react-router-dom';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { fetchTransactions } from './api';
 
 
 function Home() {
@@ -24,6 +25,15 @@ function Home() {
 
 function App() {
   const [transactions, setTransactions] = useState([]);
+
+  useEffect(() => {
+    // Replace with actual userId logic as needed
+    const userId = '1';
+    fetchTransactions(userId)
+      .then(data => setTransactions(data))
+      .catch(err => console.error('Failed to fetch transactions:', err));
+  }, []);
+
   return (
     <Router>
       <Routes>
