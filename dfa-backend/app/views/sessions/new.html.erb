@@ -1,0 +1,19 @@
+<h1>Login</h1>
+
+<%= form_with url: login_path, method: :post, local: true, data: { turbo: false } do |form| %>
+  <div>
+    <%= form.label :email %><br>
+    <%= form.email_field :email, autofocus: true, required: true %>
+  </div>
+  <div>
+    <%= form.label :password %><br>
+    <%= form.password_field :password, required: true %>
+  </div>
+  <div>
+    <%= form.submit "Log in" %>
+  </div>
+<% end %>
+
+<% if flash[:alert] %>
+  <p style="color: red;"> <%= flash[:alert] %> </p>
+<% end %>
