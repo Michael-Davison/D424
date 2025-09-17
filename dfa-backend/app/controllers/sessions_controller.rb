@@ -13,8 +13,19 @@ class SessionsController < ApplicationController
 
 			if user&.authenticate(password)
 				session[:user_id] = user.id
+				# JWT secret (in production, use ENV or Rails credentials)
+				jwt_secret = Rails.application.secret_key_base
+				payload = { user_id: user.id, exp: 24.hours.from_now.to_i }
+				token = JWT.encode(payload, jwt_secret, 'HS256')
+
 				respond_to do |format|
-					format.json { render json: { success: true, user: { id: user.id, name: user.name, email: user.email } }, status: :ok }
+					format.json {
+						render json: {
+							success: true,
+							token: token,
+							user: { id: user.id, name: user.name, email: user.email }
+						}, status: :ok
+					}
 					format.html { redirect_to root_path, notice: "Logged in!" }
 				end
 			else

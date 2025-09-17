@@ -1,4 +1,9 @@
 Rails.application.routes.draw do
+  get "transactions/index"
+  get "transactions/show"
+  get "transactions/create"
+  get "transactions/update"
+  get "transactions/destroy"
   get "users/new"
   get "users/create"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
