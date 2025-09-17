@@ -94,7 +94,16 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
       return;
     }
     const txn = transactions[idx];
-    const updatedFields = { ...editForm, amount: parseFloat(editForm.amount).toFixed(2) };
+    const amt = parseFloat(editForm.amount);
+    if (editForm.type === 'Income' && amt <= 0) {
+      alert('Income amount must be positive.');
+      return;
+    }
+    if (editForm.type === 'Expense' && amt >= 0) {
+      alert('Expense amount must be negative.');
+      return;
+    }
+    const updatedFields = { ...editForm, amount: amt.toFixed(2) };
     if (txn && txn.id) {
       try {
         await updateTransaction(auth.user.id, txn.id, updatedFields, auth.token);
@@ -160,13 +169,22 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
         alert('User not authenticated.');
         return;
       }
-      const newTxn = { ...form, amount: parseFloat(form.amount).toFixed(2) };
+      const amt = parseFloat(form.amount);
+      if (form.type === 'Income' && amt <= 0) {
+        alert('Income amount must be positive.');
+        return;
+      }
+      if (form.type === 'Expense' && amt >= 0) {
+        alert('Expense amount must be negative.');
+        return;
+      }
+      const newTxn = { ...form, amount: amt.toFixed(2) };
       const result = await addTransaction(auth.user.id, newTxn, auth.token);
       setTransactions([
         ...transactions,
         result.transaction || newTxn
       ]);
-      setForm({ date: '', description: '', amount: '', type: 'Expense', category: '' });
+  setForm({ date: getToday(), description: '', amount: '', type: 'Expense', category: '' });
     } catch (err) {
       alert('Failed to add transaction: ' + err.message);
     }
@@ -176,7 +194,7 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
     <div className="transaction-manager-page container mt-4">
       <div className='d-flex flex-row justify-content-between align-items-center'>
         <h2 className="mb-4">Transaction Manager</h2>
-        <Button variant="info" onClick={() => setShowModal(true)}>
+        <Button className='btn-success' onClick={() => setShowModal(true)}>
           Upload
         </Button>
       </div>
@@ -258,7 +276,6 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
             value={form.amount}
             onChange={handleChange}
             required
-            min="0.01"
             step="0.01"
           />
         </div>
