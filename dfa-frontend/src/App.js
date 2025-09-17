@@ -68,8 +68,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home onLogout={handleLogout} />} />
-        <Route path="/transaction-manager" element={<TransactionManager transactions={transactions} setTransactions={setTransactions} />} />
-        <Route path="/analytics-dashboard" element={<AnalyticsDashboard transactions={transactions} />} />
+        <Route path="/transaction-manager" element={<TransactionManager transactions={transactions} setTransactions={setTransactions} auth={auth} />} />
+        <Route path="/analytics-dashboard" element={<AnalyticsDashboard transactions={transactions} auth={auth} />} />
       </Routes>
     </Router>
   );

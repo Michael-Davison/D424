@@ -29,15 +29,49 @@ export async function fetchTransactions(userId, token) {
   return response.json();
 }
 
-// Example: add a transaction
-export async function addTransaction(transaction) {
-  // return fetch('/api/transactions', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(transaction),
-  // }).then(res => res.json());
-  // Placeholder: implement with your backend endpoint
-  return { success: true };
+// Create a transaction
+export async function addTransaction(userId, transaction, token) {
+  const url = `${BASE_URL}/users/${userId}/transactions`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify(transaction)
+  });
+  if (!response.ok) {
+    throw new Error('Failed to add transaction');
+  }
+  return response.json();
 }
 
-// Add more API functions as needed
+// Edit (update) a transaction
+export async function updateTransaction(userId, transactionId, updatedFields, token) {
+  const url = `${BASE_URL}/users/${userId}/transactions/${transactionId}`;
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify(updatedFields)
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update transaction');
+  }
+  return response.json();
+}
+
+// Delete a transaction
+export async function deleteTransaction(userId, transactionId, token) {
+  const url = `${BASE_URL}/users/${userId}/transactions/${transactionId}`;
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete transaction');
+  }
+  return response.json();
+}

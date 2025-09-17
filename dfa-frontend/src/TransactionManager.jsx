@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Modal, Button } from 'react-bootstrap';
+import { addTransaction, updateTransaction, deleteTransaction } from './api';
 
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
@@ -20,7 +21,7 @@ function getToday() {
   return d.toISOString().slice(0, 10);
 }
 
-const TransactionManager = ({ transactions, setTransactions }) => {
+const TransactionManager = ({ transactions, setTransactions, auth }) => {
   const [form, setForm] = useState({
     date: getToday(),
     description: '',
@@ -35,6 +36,10 @@ const TransactionManager = ({ transactions, setTransactions }) => {
 
   const [search, setSearch] = useState('');
 
+  const [selected, setSelected] = useState([]); // array of indexes
+  const [editIdx, setEditIdx] = useState(null);
+  const [editForm, setEditForm] = useState({});
+
   const filteredTransactions = transactions.filter(txn => {
     if (!search) return true;
     const s = search.toLowerCase();
@@ -46,16 +51,79 @@ const TransactionManager = ({ transactions, setTransactions }) => {
       (txn.category || '').toLowerCase().includes(s)
     );
   });
-  const handleCSVUpload = (e) => {
+
+  const handleSelect = idx => {
+    setSelected(selected.includes(idx)
+      ? selected.filter(i => i !== idx)
+      : [...selected, idx]);
+  };
+
+  const handleDelete = async () => {
+    if (!auth?.user?.id || !auth?.token) {
+      alert('User not authenticated.');
+      return;
+    }
+    const toDelete = new Set(selected);
+    // Optionally, call deleteTransaction API for each selected
+    for (const idx of selected) {
+      const txn = transactions[idx];
+      if (txn && txn.id) {
+        try {
+          await deleteTransaction(auth.user.id, txn.id, auth.token);
+        } catch (err) {
+          // Optionally handle error per transaction
+        }
+      }
+    }
+    setTransactions(transactions.filter((_, idx) => !toDelete.has(idx)));
+    setSelected([]);
+  };
+
+  const startEdit = idx => {
+    setEditIdx(idx);
+    setEditForm({ ...transactions[idx] });
+  };
+
+  const handleEditChange = e => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
+  const handleEditSave = async idx => {
+    if (!auth?.user?.id || !auth?.token) {
+      alert('User not authenticated.');
+      return;
+    }
+    const txn = transactions[idx];
+    const updatedFields = { ...editForm, amount: parseFloat(editForm.amount).toFixed(2) };
+    if (txn && txn.id) {
+      try {
+        await updateTransaction(auth.user.id, txn.id, updatedFields, auth.token);
+      } catch (err) {
+        alert('Failed to update transaction: ' + err.message);
+        return;
+      }
+    }
+    const updated = transactions.map((t, i) =>
+      i === idx ? updatedFields : t
+    );
+    setTransactions(updated);
+    setEditIdx(null);
+  };
+
+  const handleEditCancel = () => setEditIdx(null);
+  const handleCSVUpload = async (e) => {
     e.preventDefault();
+    if (!auth?.user?.id || !auth?.token) {
+      alert('User not authenticated.');
+      return;
+    }
     const file = fileInputRef.current.files[0];
     if (!file) return;
     setUploading(true);
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const text = event.target.result;
       const parsed = parseCSV(text);
-
       const validRows = parsed.filter(row => row.date && row.description && row.amount && row.type && row.category);
       const formatted = validRows.map(row => ({
         date: row.date,
@@ -64,8 +132,17 @@ const TransactionManager = ({ transactions, setTransactions }) => {
         type: row.type.charAt(0).toUpperCase() + row.type.slice(1).toLowerCase(),
         category: row.category,
       }));
+      let added = 0;
+      for (const txn of formatted) {
+        try {
+          await addTransaction(auth.user.id, txn, auth.token);
+          added++;
+        } catch (err) {
+          // Optionally handle error per row
+        }
+      }
       setTransactions([...transactions, ...formatted]);
-      setUploadInfo({ count: formatted.length });
+      setUploadInfo({ count: added });
       setUploading(false);
       fileInputRef.current.value = '';
     };
@@ -76,13 +153,23 @@ const TransactionManager = ({ transactions, setTransactions }) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setTransactions([
-      ...transactions,
-      { ...form, amount: parseFloat(form.amount).toFixed(2) },
-    ]);
-    setForm({ date: getToday(), description: '', amount: '', type: 'Income', category: '' });
+    try {
+      if (!auth?.user?.id || !auth?.token) {
+        alert('User not authenticated.');
+        return;
+      }
+      const newTxn = { ...form, amount: parseFloat(form.amount).toFixed(2) };
+      const result = await addTransaction(auth.user.id, newTxn, auth.token);
+      setTransactions([
+        ...transactions,
+        result.transaction || newTxn
+      ]);
+      setForm({ date: '', description: '', amount: '', type: 'Expense', category: '' });
+    } catch (err) {
+      alert('Failed to add transaction: ' + err.message);
+    }
   };
 
   return (
@@ -207,30 +294,78 @@ const TransactionManager = ({ transactions, setTransactions }) => {
       {filteredTransactions.length === 0 ? (
         <div className="alert alert-info">No transactions match your search.</div>
       ) : (
-        <div className="table-responsive">
-          <table className="table table-bordered table-striped">
-            <thead className="table-light">
-              <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Amount</th>
-                <th>Type</th>
-                <th>Category</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTransactions.map((txn, idx) => (
-                <tr key={idx}>
-                  <td>{txn.date}</td>
-                  <td>{txn.description}</td>
-                  <td>${txn.amount}</td>
-                  <td>{txn.type}</td>
-                  <td>{txn.category}</td>
+        <>
+          <div className="mb-2">
+            <Button variant="danger" size="sm" disabled={selected.length === 0} onClick={handleDelete}>
+              Delete Selected
+            </Button>
+          </div>
+          <div className="table-responsive">
+            <table className="table table-bordered table-striped">
+              <thead className="table-light">
+                <tr>
+                  <th></th>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredTransactions.map((txn, idx) => {
+                  // Find the real index in transactions array
+                  const realIdx = transactions.findIndex(t => t === txn);
+                  const isEditing = editIdx === realIdx;
+                  return (
+                    <tr key={realIdx}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selected.includes(realIdx)}
+                          onChange={() => handleSelect(realIdx)}
+                        />
+                      </td>
+                      {isEditing ? (
+                        <>
+                          <td><input type="date" name="date" value={editForm.date} onChange={handleEditChange} className="form-control" /></td>
+                          <td><input type="text" name="description" value={editForm.description} onChange={handleEditChange} className="form-control" /></td>
+                          <td><input type="number" name="amount" value={editForm.amount} onChange={handleEditChange} className="form-control" /></td>
+                          <td>
+                            <select name="type" value={editForm.type} onChange={handleEditChange} className="form-select">
+                              <option value="Income">Income</option>
+                              <option value="Expense">Expense</option>
+                            </select>
+                          </td>
+                          <td><input type="text" name="category" value={editForm.category} onChange={handleEditChange} className="form-control" /></td>
+                        </>
+                      ) : (
+                        <>
+                          <td>{txn.date}</td>
+                          <td>{txn.description}</td>
+                          <td>${txn.amount}</td>
+                          <td>{txn.type}</td>
+                          <td>{txn.category}</td>
+                        </>
+                      )}
+                      <td>
+                        {isEditing ? (
+                          <>
+                            <Button size="sm" variant="success" onClick={() => handleEditSave(realIdx)} className="me-2">Save</Button>
+                            <Button size="sm" variant="secondary" onClick={handleEditCancel}>Cancel</Button>
+                          </>
+                        ) : (
+                          <Button size="sm" variant="warning" onClick={() => startEdit(realIdx)}>Edit</Button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
