@@ -1,5 +1,6 @@
 class TransactionsController < ApplicationController
   include JwtAuthenticatable
+  skip_before_action :verify_authenticity_token
 
   # GET /transactions
   def index
