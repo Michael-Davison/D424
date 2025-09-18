@@ -1,3 +1,12 @@
+// Fetch categories for transactions
+export async function getCategories() {
+  const BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const response = await fetch(`${BASE_URL}/categories`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch categories');
+  }
+  return response.json();
+}
 // Centralized API request functions for the DFA frontend
 // Get backend base URL from environment variable
 const BASE_URL = process.env.REACT_APP_BACKEND_URL;

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Modal, Button } from 'react-bootstrap';
-import { addTransaction, updateTransaction, deleteTransaction } from './api';
+import { addTransaction, updateTransaction, deleteTransaction, getCategories } from './api';
 
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
@@ -14,7 +14,7 @@ function parseCSV(text) {
     });
     return obj;
   });
-}
+}  
 
 function getToday() {
   const d = new Date();
@@ -22,6 +22,23 @@ function getToday() {
 }
 
 const TransactionManager = ({ transactions, setTransactions, auth }) => {
+  // Scalable category lists
+    // Categories from backend
+    const [incomeCategories, setIncomeCategories] = useState([]);
+    const [expenseCategories, setExpenseCategories] = useState([]);
+    React.useEffect(() => {
+      async function fetchCategories() {
+        try {
+          const data = await getCategories();
+          setIncomeCategories(data.income || []);
+          setExpenseCategories(data.expense || []);
+        } catch (err) {
+          setIncomeCategories([]);
+          setExpenseCategories([]);
+        }
+      }
+      fetchCategories();
+    }, []);
   const [form, setForm] = useState({
     date: getToday(),
     description: '',
@@ -103,6 +120,10 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
       alert('Expense amount must be negative.');
       return;
     }
+    if (!editForm.category) {
+      alert('Please select a category.');
+      return;
+    }
     const updatedFields = { ...editForm, amount: amt.toFixed(2) };
     if (txn && txn.id) {
       try {
@@ -178,13 +199,17 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
         alert('Expense amount must be negative.');
         return;
       }
+      if (!form.category) {
+        alert('Please select a category.');
+        return;
+      }
       const newTxn = { ...form, amount: amt.toFixed(2) };
       const result = await addTransaction(auth.user.id, newTxn, auth.token);
       setTransactions([
         ...transactions,
         result.transaction || newTxn
       ]);
-  setForm({ date: getToday(), description: '', amount: '', type: 'Expense', category: '' });
+      setForm({ date: getToday(), description: '', amount: '', type: 'Expense', category: '' });
     } catch (err) {
       alert('Failed to add transaction: ' + err.message);
     }
@@ -285,22 +310,27 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
             name="type"
             value={form.type}
             onChange={handleChange}
+            required
           >
             <option value="Income">Income</option>
             <option value="Expense">Expense</option>
           </select>
         </div>
         <div className="col-md-2">
-          <input
-            type="text"
-            className="form-control"
+          <select
+            className="form-select"
             name="category"
-            placeholder="Category"
             value={form.category}
             onChange={handleChange}
             required
-          />
+          >
+            <option value="">Select Category</option>
+            {(form.type === 'Income' ? incomeCategories : expenseCategories).map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
         </div>
+
         <div className="col-md-2">
           <button type="submit" className="btn btn-primary w-100">
             Add Transaction
@@ -355,7 +385,14 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
                               <option value="Expense">Expense</option>
                             </select>
                           </td>
-                          <td><input type="text" name="category" value={editForm.category} onChange={handleEditChange} className="form-control" /></td>
+                          <td>
+                            <select name="category" value={editForm.category} onChange={handleEditChange} className="form-select">
+                              <option value="">Select Category</option>
+                              {(editForm.type === 'Income' ? incomeCategories : expenseCategories).map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                              ))}
+                            </select>
+                          </td>
                         </>
                       ) : (
                         <>
