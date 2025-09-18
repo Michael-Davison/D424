@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
@@ -15,11 +14,52 @@ function AnalyticsDashboard({ auth }) {
     }
   }, [auth]);
 
+  // Only include expenses by category
+  console.log(transactions)
+  const expenseCategoryTotals = transactions.filter(t => t.type === 'Expense').reduce((acc, t) => {
+    if (!acc[t.category]) acc[t.category] = 0;
+    acc[t.category] += parseFloat(t.amount);
+    return acc;
+  }, {});
+  const categoryPieOptions = {
+    chart: { type: 'pie' },
+    title: { text: 'Expenses by Category' },
+    tooltip: {
+      pointFormat: '<b>$' + '{point.y:.2f}</b>'
+    },
+    plotOptions: {
+      pie: {
+        dataLabels: {
+          enabled: true,
+          format: '{point.name}: $' + '{point.y:.2f}'
+        }
+      }
+    },
+    series: [{
+      name: 'Total',
+      colorByPoint: true,
+      data: Object.entries(expenseCategoryTotals).map(([name, y]) => ({ name, y }))
+    }]
+  };
+
+  console.log(expenseCategoryTotals);
+
   const income = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + parseFloat(t.amount), 0);
   const expense = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + parseFloat(t.amount), 0);
   const pieOptions = {
     chart: { type: 'pie' },
     title: { text: 'Income vs Expense' },
+    tooltip: {
+      pointFormat: '<b>$' + '{point.y:.2f}</b>'
+    },
+    plotOptions: {
+      pie: {
+        dataLabels: {
+          enabled: true,
+          format: '{point.name}: $' + '{point.y:.2f}'
+        }
+      }
+    },
     series: [{
       name: 'Total',
       colorByPoint: true,
@@ -56,8 +96,13 @@ function AnalyticsDashboard({ auth }) {
   return (
     <div className="analytics-dashboard-page container mt-4">
       <h2 className="mb-4">Analytics Dashboard</h2>
-      <div className="mb-5">
-        <HighchartsReact highcharts={Highcharts} options={pieOptions} />
+      <div className="d-flex flex-row gap-4 mb-5" style={{ justifyContent: 'space-between' }}>
+        <div style={{ flex: 1 }}>
+          <HighchartsReact highcharts={Highcharts} options={pieOptions} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <HighchartsReact highcharts={Highcharts} options={categoryPieOptions} />
+        </div>
       </div>
       <div className="mb-5">
         <HighchartsReact highcharts={Highcharts} options={trendOptions} />
