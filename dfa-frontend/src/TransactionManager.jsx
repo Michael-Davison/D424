@@ -112,12 +112,8 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
     }
     const txn = transactions[idx];
     const amt = parseFloat(editForm.amount);
-    if (editForm.type === 'Income' && amt <= 0) {
-      alert('Income amount must be positive.');
-      return;
-    }
-    if (editForm.type === 'Expense' && amt >= 0) {
-      alert('Expense amount must be negative.');
+    if (isNaN(amt) || amt <= 0) {
+      alert('Amount must be a positive number.');
       return;
     }
     if (!editForm.category) {
@@ -141,6 +137,7 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
   };
 
   const handleEditCancel = () => setEditIdx(null);
+  
   const handleCSVUpload = async (e) => {
     e.preventDefault();
     if (!auth?.user?.id || !auth?.token) {
@@ -150,11 +147,24 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
     const file = fileInputRef.current.files[0];
     if (!file) return;
     setUploading(true);
+
     const reader = new FileReader();
+
     reader.onload = async (event) => {
       const text = event.target.result;
       const parsed = parseCSV(text);
-      const validRows = parsed.filter(row => row.date && row.description && row.amount && row.type && row.category);
+    
+      const validRows = parsed.filter(row => {
+        if (!row.date || !row.description || !row.amount || !row.type || !row.category) return false;
+        const amt = parseFloat(row.amount);
+        const type = row.type.charAt(0).toUpperCase() + row.type.slice(1).toLowerCase();
+        if (type !== 'Income' && type !== 'Expense') return false;
+        if (isNaN(amt) || amt <= 0) return false;
+        const allowedCats = type === 'Income' ? incomeCategories : expenseCategories;
+        if (!allowedCats.includes(row.category)) return false;
+        return true;
+      });
+
       const formatted = validRows.map(row => ({
         date: row.date,
         description: row.description,
@@ -162,6 +172,7 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
         type: row.type.charAt(0).toUpperCase() + row.type.slice(1).toLowerCase(),
         category: row.category,
       }));
+
       let added = 0;
       for (const txn of formatted) {
         try {
@@ -191,12 +202,8 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
         return;
       }
       const amt = parseFloat(form.amount);
-      if (form.type === 'Income' && amt <= 0) {
-        alert('Income amount must be positive.');
-        return;
-      }
-      if (form.type === 'Expense' && amt >= 0) {
-        alert('Expense amount must be negative.');
+      if (isNaN(amt) || amt <= 0) {
+        alert('Amount must be a positive number.');
         return;
       }
       if (!form.category) {
