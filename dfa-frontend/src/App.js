@@ -3,7 +3,7 @@ import TransactionManager from './TransactionManager.jsx';
 import AnalyticsDashboard from './AnalyticsDashboard.jsx';
 import Login from './Login.jsx';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {Link, Route, BrowserRouter as Router, Routes} from 'react-router-dom';
+import { Link, NavLink, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { fetchTransactions } from './api';
 
@@ -20,13 +20,6 @@ function Home({ onLogout }) {
           <button className="btn btn-success btn-lg">Analytics Dashboard</button>
         </Link>
       </div>
-      <button
-        className="btn btn-outline-danger btn-lg"
-        style={{ position: 'fixed', bottom: 32, right: 32, zIndex: 1000 }}
-        onClick={onLogout}
-      >
-        Logout
-      </button>
     </div>
   );
 }
@@ -64,8 +57,37 @@ function App() {
     return <Login onLogin={handleLogin} />;
   }
 
+  // Navbar component
+  function Navbar() {
+    return (
+      <nav className="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+        <div className="container-fluid">
+          <NavLink className="navbar-brand" to="/">DFA</NavLink>
+          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span className="navbar-toggler-icon"></span>
+          </button>
+          <div className="collapse navbar-collapse" id="navbarNav">
+            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+              <li className="nav-item">
+                <NavLink className={({ isActive }) => 'nav-link' + (isActive ? ' text-white fw-bold' : '')} to="/">Home</NavLink>
+              </li>
+              <li className="nav-item">
+                <NavLink className={({ isActive }) => 'nav-link' + (isActive ? ' text-white fw-bold' : '')} to="/transaction-manager">Transaction Manager</NavLink>
+              </li>
+              <li className="nav-item">
+                <NavLink className={({ isActive }) => 'nav-link' + (isActive ? ' text-white fw-bold' : '')} to="/analytics-dashboard">Analytics Dashboard</NavLink>
+              </li>
+            </ul>
+            <button className="btn btn-outline-light" onClick={handleLogout}>Logout</button>
+          </div>
+        </div>
+      </nav>
+    );
+  }
+
   return (
     <Router>
+      <Navbar />
       <Routes>
         <Route path="/" element={<Home onLogout={handleLogout} />} />
         <Route path="/transaction-manager" element={<TransactionManager transactions={transactions} setTransactions={setTransactions} auth={auth} />} />

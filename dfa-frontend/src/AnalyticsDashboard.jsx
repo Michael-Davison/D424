@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import { fetchTransactions } from './api';
+import exportingInit from 'highcharts/modules/exporting';
+;
 
 function AnalyticsDashboard({ auth }) {
   const [transactions, setTransactions] = useState([]);
@@ -14,8 +16,7 @@ function AnalyticsDashboard({ auth }) {
     }
   }, [auth]);
 
-  // Only include expenses by category
-  console.log(transactions)
+
   const expenseCategoryTotals = transactions.filter(t => t.type === 'Expense').reduce((acc, t) => {
     if (!acc[t.category]) acc[t.category] = 0;
     acc[t.category] += parseFloat(t.amount);
@@ -39,16 +40,16 @@ function AnalyticsDashboard({ auth }) {
       name: 'Total',
       colorByPoint: true,
       data: Object.entries(expenseCategoryTotals).map(([name, y]) => ({ name, y }))
-    }]
+    }],
+    exporting: { enabled: true }
   };
-
-  console.log(expenseCategoryTotals);
 
   const income = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + parseFloat(t.amount), 0);
   const expense = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + parseFloat(t.amount), 0);
   const pieOptions = {
     chart: { type: 'pie' },
     title: { text: 'Income vs Expense' },
+    exporting: { enabled: true },
     tooltip: {
       pointFormat: '<b>$' + '{point.y:.2f}</b>'
     },
@@ -78,6 +79,7 @@ function AnalyticsDashboard({ auth }) {
     title: { text: 'Transaction Trend' },
     xAxis: { categories: dates, title: { text: 'Date' } },
     yAxis: { title: { text: 'Amount ($)' } },
+     exporting: { enabled: true },
     series: [
       { name: 'Income', data: incomeByDate },
       { name: 'Expense', data: expenseByDate }
