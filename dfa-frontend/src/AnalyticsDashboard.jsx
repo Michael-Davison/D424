@@ -3,7 +3,7 @@ import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import { fetchTransactions } from './api';
 import exportingInit from 'highcharts/modules/exporting';
-;
+
 
 function AnalyticsDashboard({ auth }) {
   const [transactions, setTransactions] = useState([]);

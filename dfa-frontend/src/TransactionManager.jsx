@@ -23,8 +23,30 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
       fetchCategories();
     }, []);
 
+     const handleDeleteAll = async () => {
+    if (!auth?.user?.id || !auth?.token) {
+      alert('User not authenticated.');
+      return;
+    }
+    if (!transactions.length) return;
+    if (!window.confirm('Are you sure you want to delete ALL transactions? This cannot be undone.')) return;
+    // Delete each transaction one by one (API only supports single delete)
+    for (const txn of transactions) {
+      if (txn && txn.id) {
+        try {
+          await deleteTransaction(auth.user.id, txn.id, auth.token);
+        } catch (err) {
+          // Optionally handle error per transaction
+        }
+      }
+    }
+    setTransactions([]);
+  };
+
   
   const downloadCSV = () => {
+  // Delete all transactions with confirmation
+ 
     if (!transactions.length) return;
     const headers = ['date', 'description', 'amount', 'type', 'category'];
     const csvRows = [headers.join(',')];
@@ -357,9 +379,14 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
       ) : (
         <>
           <div className="mb-2 d-flex justify-content-between">
-            <Button variant="danger" size="sm" disabled={selected.length === 0} onClick={handleDelete}>
-              Delete Selected
-            </Button>
+            <div className='d-flex gap-2'>
+              <Button variant="danger" size="sm" disabled={selected.length === 0} onClick={handleDelete}>
+                Delete Selected
+              </Button>
+              <Button variant="danger" size="sm" onClick={handleDeleteAll} disabled={transactions.length === 0}>
+                Delete All Transactions
+              </Button>
+            </div>
             <Button variant="secondary" size="sm" onClick={downloadCSV}>
               Download CSV
             </Button>
