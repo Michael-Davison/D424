@@ -1,32 +1,15 @@
-import React, { useState, useRef } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import { addTransaction, updateTransaction, deleteTransaction, getCategories } from './api';
-
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-  return lines.slice(1).map(line => {
-    const values = line.split(',');
-    const obj = {};
-    headers.forEach((h, i) => {
-      obj[h] = values[i] ? values[i].trim() : '';
-    });
-    return obj;
-  });
-}  
-
-function getToday() {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
-}
+import { parseCSV, getToday } from './utilityFunctions';
 
 const TransactionManager = ({ transactions, setTransactions, auth }) => {
-  // Scalable category lists
-    // Categories from backend
+ 
     const [incomeCategories, setIncomeCategories] = useState([]);
     const [expenseCategories, setExpenseCategories] = useState([]);
-    React.useEffect(() => {
+
+    useEffect(() => {
       async function fetchCategories() {
         try {
           const data = await getCategories();
@@ -39,6 +22,29 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
       }
       fetchCategories();
     }, []);
+
+  
+  const downloadCSV = () => {
+    if (!transactions.length) return;
+    const headers = ['date', 'description', 'amount', 'type', 'category'];
+    const csvRows = [headers.join(',')];
+    transactions.forEach(txn => {
+      const row = headers.map(h => `"${(txn[h] ?? '').toString().replace(/"/g, '""')}"`).join(',');
+      csvRows.push(row);
+    });
+    const csvContent = csvRows.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const today = new Date().toISOString().slice(0, 10);
+    a.download = `transactions_${today}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const [form, setForm] = useState({
     date: getToday(),
     description: '',
@@ -46,6 +52,7 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
     type: 'Income',
     category: '',
   });
+
   const fileInputRef = useRef();
   const [uploading, setUploading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -349,9 +356,12 @@ const TransactionManager = ({ transactions, setTransactions, auth }) => {
         <div className="alert alert-info">No transactions match your search.</div>
       ) : (
         <>
-          <div className="mb-2">
+          <div className="mb-2 d-flex justify-content-between">
             <Button variant="danger" size="sm" disabled={selected.length === 0} onClick={handleDelete}>
               Delete Selected
+            </Button>
+            <Button variant="secondary" size="sm" onClick={downloadCSV}>
+              Download CSV
             </Button>
           </div>
           <div className="table-responsive">
