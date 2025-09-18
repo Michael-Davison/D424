@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import { fetchTransactions } from './api';
+
+// eslint-disable-next-line 
 import exportingInit from 'highcharts/modules/exporting';
 
 
@@ -16,7 +18,6 @@ function AnalyticsDashboard({ auth }) {
     }
   }, [auth]);
 
-
   const expenseCategoryTotals = transactions.filter(t => t.type === 'Expense').reduce((acc, t) => {
     if (!acc[t.category]) acc[t.category] = 0;
     acc[t.category] += parseFloat(t.amount);
@@ -26,13 +27,15 @@ function AnalyticsDashboard({ auth }) {
     chart: { type: 'pie' },
     title: { text: 'Expenses by Category' },
     tooltip: {
-      pointFormat: '<b>$' + '{point.y:.2f}</b>'
+      // eslint-disable-next-line
+      pointFormat: "<b>${point.y:.2f}</b>"
     },
     plotOptions: {
       pie: {
         dataLabels: {
           enabled: true,
-          format: '{point.name}: $' + '{point.y:.2f}'
+          // eslint-disable-next-line
+          format: '{point.name}: ${point.y:.2f}'
         }
       }
     },
@@ -51,13 +54,15 @@ function AnalyticsDashboard({ auth }) {
     title: { text: 'Income vs Expense' },
     exporting: { enabled: true },
     tooltip: {
-      pointFormat: '<b>$' + '{point.y:.2f}</b>'
+      // eslint-disable-next-line
+      pointFormat: '<b>${point.y:.2f}</b>'
     },
     plotOptions: {
       pie: {
         dataLabels: {
           enabled: true,
-          format: '{point.name}: $' + '{point.y:.2f}'
+          // eslint-disable-next-line
+          format: '{point.name}: ${point.y:.2f}'
         }
       }
     },
