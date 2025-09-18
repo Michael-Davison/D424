@@ -2,7 +2,7 @@ class Income < Transaction
 
   before_save :make_amount_positive
 
-  validates :category, inclusion: { in: ['Job', 'Side Hustle', 'Investment', 'Gift'] }
+  validates :category, inclusion: { in: Transaction::INCOME_CATEGORIES }
 
   scope :this_month, -> { where(date: Date.current.beginning_of_month..Date.current.end_of_month) }
 

@@ -2,7 +2,7 @@ class Expense < Transaction
 
   before_save :make_amount_negative
 
-  validates :category, inclusion: { in: ['Food', 'Housing', 'Utilities', 'Entertainment', 'Other'] }
+  validates :category, inclusion: { in: Transaction::EXPENSE_CATEGORIES }
 
   scope :by_category, ->(cat) { where(category: cat) }
 
