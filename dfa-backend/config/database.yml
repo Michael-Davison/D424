@@ -17,3 +17,7 @@ test:
 production:
   <<: *default
   database: dfa_backend_production
+
+cable:
+  <<: *default
+  database: dfa_backend_production
