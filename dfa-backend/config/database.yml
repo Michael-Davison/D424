@@ -25,10 +25,7 @@ cable:
 queue:
   <<: *default
   database: dfa_backend_production
-<<<<<<< HEAD
-=======
 
 cache:
   <<: *default
   database: dfa_backend_production
->>>>>>> 1c233bf91dcb1279182e0af3d2554889b17cddd9
