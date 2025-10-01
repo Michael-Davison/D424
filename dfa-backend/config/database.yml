@@ -21,3 +21,11 @@ production:
 cable:
   <<: *default
   database: dfa_backend_production
+
+queue:
+  <<: *default
+  database: dfa_backend_production
+
+cache:
+  <<: *default
+  database: dfa_backend_production
