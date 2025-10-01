@@ -89,7 +89,7 @@ function App() {
     <Router>
       <Navbar />
       <Routes>
-        <Route path="/424" element={<Home onLogout={handleLogout} />} />
+        <Route exact path="/" element={<Home onLogout={handleLogout} />} />
         <Route path="/transaction-manager" element={<TransactionManager transactions={transactions} setTransactions={setTransactions} auth={auth} />} />
         <Route path="/analytics-dashboard" element={<AnalyticsDashboard transactions={transactions} auth={auth} />} />
       </Routes>
