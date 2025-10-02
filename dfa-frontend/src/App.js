@@ -3,7 +3,7 @@ import TransactionManager from './TransactionManager.jsx';
 import AnalyticsDashboard from './AnalyticsDashboard.jsx';
 import Login from './Login.jsx';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Link, NavLink, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { Link, NavLink, Route, HashRouter as Router, Routes } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { fetchTransactions } from './api';
 
