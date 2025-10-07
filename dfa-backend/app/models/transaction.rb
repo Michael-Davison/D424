@@ -11,7 +11,7 @@ class Transaction < ApplicationRecord
 		'Shopping', 'Other'
 	].freeze
 
-	# Encapsulation: validations
+	# Encapsulation: validations and methods related to transactions
 	validates :date, :description, :amount, :type, :category, :user_id, presence: true
 	validates :amount, numericality: true
 
